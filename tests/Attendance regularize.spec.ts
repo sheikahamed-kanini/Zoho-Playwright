@@ -5,7 +5,7 @@ import data from './Data/data.json';
 import { weekend, getPreviousWorkingDay} from './utils/weekend';
 import { openRegularize, setCheckIn, setCheckOut } from './utils/attendance';
 
-
+//Command
 
 // Add holidays definition (example: import from data.json or define manually)
 test ('attendance regularize (requires login)', async ({ page }) => {
