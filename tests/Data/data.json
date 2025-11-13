@@ -1,0 +1,25 @@
+
+
+{
+ "user":{
+    "email":"sheikahamed.ali@kanini.com",
+    "password": "ALjabbar246$"
+   },
+ "dates":{
+   "start": "14-11-2025",
+   "end": "14-11-2025"
+},
+  "regularize": {
+      "dayOffset": 0,                
+      "checkIn": { "hour": "07", "minute": "30", "period": "PM" },
+      "checkOut": { "hour": "09", "minute": "45", "period": "PM" }
+    
+  },
+   "description":{
+    "text": "Hi Siva due to some personal reasons i am taking PTO . Kindly regularize it "
+   },
+   "holidays": [
+        "2025-11-29",
+        "2025-12-25"
+    ]
+}
