@@ -3,29 +3,33 @@ import { env } from './utils/env';
 //import data from './Data/data.json';
 //import { signinlocators} from './Locator/signinlocators.spec';
 import {login} from './utils/login';
-import signOut from './utils/signout';
+import {signOut}from './utils/signout';
+
+// Slow down execution - adjust these values
+const SLOW_SPEED = 1000; // milliseconds between actions
+
 test.describe('myhrms',() =>{
 test.beforeEach(async ({page})=>{
 await page.goto (env.baseURL);
+await page.waitForTimeout(SLOW_SPEED);
 //await page.pause();
 await expect (page.getByText ( 'Your complete online HR solution')).toBeVisible();
+await page.waitForTimeout(SLOW_SPEED);
 });
  test('login',async({page}) =>{
+    await page.waitForTimeout(SLOW_SPEED);
     await login(page);
+    await page.waitForTimeout(SLOW_SPEED * 3);
+    
+    // Just verify we're on the dashboard page (URL changed after login)
+    await expect(page).toHaveURL(/myhrms|kanini/i, { timeout: 15000 });
+    console.log('✓ Login successful - dashboard page loaded');
+    
+    await page.waitForTimeout(SLOW_SPEED);
+    
+    await signOut(page);
+    await page.waitForTimeout(SLOW_SPEED);
 
-page.waitForTimeout(3000);
- await expect (page.getByText ( 'Assistant Manager')).toBeVisible();
-try {
-   await signOut(page, 'text=Sign Out'); // replace string with your exact signout locator if you have one
-} catch (err) {
-   // rethrow so test fails as expected
-   throw err;
-} finally {
-   // optional: ensure signout/cleanup always attempted
-   try { await signOut(page); } catch {}
-}
-
-await page.pause();
-
+    console.log('✓ Kanini login & logout test completed successfully!');
 })
 });

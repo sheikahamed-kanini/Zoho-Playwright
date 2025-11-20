@@ -1,6 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { signinlocators } from '../Locator/signinlocators.spec';
-import { pickDate } from './date';
+
 
 export async function applyLeave(page: Page, startDate: string, endDate: string, description: string = 'Leave request') {
     // Click Quick Actions
@@ -16,27 +16,40 @@ export async function applyLeave(page: Page, startDate: string, endDate: string,
     await page.getByText(signinlocators.earnedleave.name).click();
 
     // Wait for form to be ready
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(800);
 
     // Click on start date container to open calendar picker
     await page.locator(signinlocators.leaveForm.startDateContainer).click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(800); // Give calendar time to render
     
     // Select start date from calendar
     await selectDateFromCalendar(page, startDate);
     
-    // Wait for form to update
-    await page.waitForTimeout(1500);
+    // Wait for form to update after first date selection
+    await page.waitForTimeout(1000);
 
     // Click on end date container to open calendar picker
     await page.locator(signinlocators.leaveForm.endDateContainer).click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(800); // Give calendar time to render
+    
+    // If end date is in a different month, navigate to next month
+    const [startDay, startMonth] = startDate.split('-');
+    const [endDay, endMonth] = endDate.split('-');
+    
+    if (parseInt(endMonth) > parseInt(startMonth)) {
+        // Navigate to next month(s)
+        const monthDiff = parseInt(endMonth) - parseInt(startMonth);
+        for (let i = 0; i < monthDiff; i++) {
+            await page.getByRole('button', { name: 'Next Month' }).click();
+            await page.waitForTimeout(400);
+        }
+    }
     
     // Select end date from calendar
     await selectDateFromCalendar(page, endDate);
 
     // Verify dates were filled
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(800);
     const startDateField = await page.locator(signinlocators.leaveForm.startDateInput).first();
     const endDateField = await page.locator(signinlocators.leaveForm.endDateInput).first();
     
@@ -59,30 +72,40 @@ async function selectDateFromCalendar(page: Page, dateStr: string) {
     const [day, month, year] = dateStr.split('-');
     const dayNum = parseInt(day);
 
-    // Try to find and click the day cell in calendar with gridcell role
-    const dayCell = page.getByRole('gridcell', { name: String(dayNum) }).first();
-    if (await dayCell.count() > 0) {
-        // Try clicking the span inside gridcell first (Zoho style)
-        const span = dayCell.locator('span').first();
-        if (await span.count() > 0) {
-            await span.click();
-            await page.waitForTimeout(300);
+    try {
+        // Wait a bit for calendar to render
+        await page.waitForTimeout(200);
+
+        // Look for the day in the currently displayed calendar
+        const dayCell = page.getByRole('gridcell', { name: String(dayNum) }).first();
+        
+        if (await dayCell.count() > 0) {
+            const span = dayCell.locator('span').first();
+            if (await span.count() > 0) {
+                await span.click();
+                await page.waitForTimeout(400);
+                return;
+            }
+            // Click the cell directly if no span
+            await dayCell.click();
+            await page.waitForTimeout(400);
             return;
         }
-        // If no span, click the cell directly
-        await dayCell.click();
-        await page.waitForTimeout(300);
-        return;
-    }
 
-    // Fallback: try by text match
-    const cellByText = page.getByText(new RegExp(`^${dayNum}$`)).first();
-    if (await cellByText.count() > 0) {
-        await cellByText.click();
-        await page.waitForTimeout(300);
-        return;
-    }
+        // Fallback: try finding by text within calendar
+        const dayText = page.getByText(new RegExp(`^${dayNum}$`), { exact: true }).first();
+        
+        if (await dayText.count() > 0) {
+            await dayText.click();
+            await page.waitForTimeout(400);
+            return;
+        }
 
-    throw new Error(`Unable to select day ${dayNum} from calendar for date ${dateStr}`);
+        throw new Error(`Day ${dayNum} not found in current calendar view for date ${dateStr}`);
+        
+    } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : String(e);
+        throw new Error(`Failed to select date ${dateStr}: ${errorMsg}`);
+    }
 }
 

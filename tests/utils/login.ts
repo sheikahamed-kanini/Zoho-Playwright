@@ -5,9 +5,10 @@ import { signinlocators } from '../Locator/signinlocators.spec';
 
 export async function login(page: Page) {
     await page.goto(env.baseURL);
-      page.waitForTimeout(5000)
+    await page.waitForTimeout(2000); // FIXED: Added await
 
     await page.getByRole('link', { name: 'Sign In' }).click();
+    await page.waitForTimeout(1000);
 
     await page.getByRole(signinlocators.signin1.Role, { name: signinlocators.signin1.name }).fill(data.user.email);
     await page.getByRole(signinlocators.nextbtn1.Role, { name: signinlocators.nextbtn1.name }).click();
@@ -41,7 +42,11 @@ export async function login(page: Page) {
 
     // safe click with catch for optional yes button
     await page.getByRole(signinlocators.yes.Role, { name: signinlocators.yes.name }).click().catch(()=>{});
-
+    // try{
+    //   const yesBtn = page.getByRole(signinlocators.yes.Role, { name: signinlocators.yes.name }).first();
+    //   await yesBtn.waitFor({ state: 'visible', timeout: 2000 });
+    //   await yesBtn.click();
+    // } catch (e) { }
     // optional "Remind me later" dismiss if present
     try {
       const remind = page.getByText('Remind me later');

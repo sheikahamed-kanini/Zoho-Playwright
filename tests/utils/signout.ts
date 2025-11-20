@@ -2,11 +2,15 @@ import { Page } from '@playwright/test';
 
 export async function signOut(page: Page, selector?: string) {
     // Click user image to open menu first
+    // Click Close button if available, otherwise skip
+    // const closeBtn = page.getByRole('button', { name: 'Close', exact: true });
+    // if (await closeBtn.count() > 0) {
+    //     await closeBtn.click();
+    // }
     await page.locator('#zpeople_userimage').click();
-     await page.getByText('Sign Out').click();
     
-    // Wait for menu to appear
-    await page.waitForTimeout(500);
+    // Wait for menu to appear before trying to click Sign Out
+    await page.waitForTimeout(800);
     
     // Try a set of common sign-out actions. If a specific selector is provided, try it first.
     const tries: (() => Promise<void>)[] = [];
@@ -16,9 +20,10 @@ export async function signOut(page: Page, selector?: string) {
     }
 
     tries.push(
-        async () => { await page.getByRole('button', { name: /sign\s*out|log\s*out|logout/i }).first().click(); },
-        async () => { await page.getByText(/sign\s*out|log\s*out|logout/i).first().click(); },
-        async () => { await page.locator('#signout, [data-qa="signout"], a[href*="logout"]').first().click(); }
+        async () => { await page.getByText(/sign\s*out/i).first().click({ timeout: 3000 }); },
+        async () => { await page.getByRole('button', { name: /sign\s*out|log\s*out|logout/i }).first().click({ timeout: 3000 }); },
+        async () => { await page.locator('[class*="signout"], [class*="logout"], .zui-menu-text:has-text("Sign Out")').first().click({ timeout: 3000 }); },
+        async () => { await page.locator('a:has-text("Sign Out"), button:has-text("Sign Out")').first().click({ timeout: 3000 }); }
     );
 
     for (const attempt of tries) {
